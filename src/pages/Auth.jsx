@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Leaf, Loader2 } from "lucide-react";
-
-const API_BASE = "http://localhost:8000/users";
+import { signupUser, loginUser } from "../services/user";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -27,87 +26,28 @@ const Auth = () => {
     try {
       if (isSignUp) {
         // ─── SIGNUP ─────────────────────────────────────────
-        const res = await fetch(`${API_BASE}/signup/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username,
-            email,
-            password,
-            first_name: firstName,
-            last_name: lastName,
-          }),
+        await signupUser({
+          username,
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
         });
 
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          setError(data.message || "Signup failed. Please try again.");
-          setLoading(false);
-          return;
-        }
-
-        // Save user info to localStorage
-        localStorage.setItem("truetone_user", JSON.stringify(data.data));
-        localStorage.setItem(
-          "truetone_profile",
-          JSON.stringify({
-            name: `${firstName} ${lastName}`.trim(),
-            email,
-            username,
-          })
-        );
-
-        navigate("/onboarding");
+        // Switch to login form — signup alone doesn't grant access
+        setIsSignUp(false);
+        setError("");
+        setPassword("");
+        alert("Account created successfully! Please login to continue.");
       } else {
         // ─── LOGIN ──────────────────────────────────────────
-        const loginPayload = username
-          ? { username, password }
-          : { email, password };
+        const data = await loginUser({ username, password });
 
-        const res = await fetch(`${API_BASE}/login/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(loginPayload),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          setError(data.message || "Invalid credentials.");
-          setLoading(false);
-          return;
-        }
-
-        // Store token and user id
-        localStorage.setItem("truetone_token", data.data.token);
-        localStorage.setItem("truetone_user", JSON.stringify(data.data));
-
-        // Fetch full profile using the token
-        const profileRes = await fetch(`${API_BASE}/profile/`, {
-          method: "GET",
-          headers: { Authorization: data.data.token },
-        });
-
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          if (profileData.success) {
-            localStorage.setItem(
-              "truetone_profile",
-              JSON.stringify({
-                name: `${profileData.data.first_name} ${profileData.data.last_name}`.trim(),
-                email: profileData.data.email,
-                username: profileData.data.username,
-              })
-            );
-          }
-        }
-
-        const stored = JSON.parse(localStorage.getItem("truetone_profile") || "{}");
-        navigate(stored.onboardingComplete ? "/dashboard" : "/onboarding");
+        navigate("/dashboard");
       }
     } catch (err) {
-      setError("Network error. Make sure the backend server is running.");
+      const msg = err.response?.data?.message || "Network error. Make sure the backend server is running.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -126,7 +66,6 @@ const Auth = () => {
               : "Sign in to continue your skincare journey."}
           </p>
 
-          {/* Error message */}
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
               {error}
@@ -134,7 +73,6 @@ const Auth = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username — shown for both signup and login */}
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -149,7 +87,6 @@ const Auth = () => {
 
             {isSignUp && (
               <>
-                {/* First Name */}
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -161,7 +98,6 @@ const Auth = () => {
                   />
                 </div>
 
-                {/* Last Name */}
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -172,25 +108,21 @@ const Auth = () => {
                     className="w-full h-12 pl-10 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
+
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-12 pl-10 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
               </>
             )}
 
-            {/* Email — only for signup */}
-            {isSignUp && (
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 pl-10 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-            )}
-
-            {/* Password */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -210,7 +142,6 @@ const Auth = () => {
               </button>
             </div>
 
-            {/* Password hint for signup */}
             {isSignUp && (
               <p className="text-xs text-slate-400 pl-1">
                 Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special character

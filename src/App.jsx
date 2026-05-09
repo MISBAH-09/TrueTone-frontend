@@ -11,14 +11,17 @@ import Chatbot from "./pages/Chatbot";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/AppLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/onboarding" element={<Onboarding />} />
-      <Route element={<AppLayout />}>
+
+      {/* Protected routes — require token */}
+      <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/skin-analysis" element={<SkinAnalysis />} />
         <Route path="/product-scanner" element={<ProductScanner />} />
@@ -27,6 +30,7 @@ const App = () => (
         <Route path="/chatbot" element={<Chatbot />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>

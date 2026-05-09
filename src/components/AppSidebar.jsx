@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ScanFace,
@@ -26,7 +26,14 @@ const navItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleSignOut = () => {
+    localStorage.removeItem("truetone_token");
+    localStorage.removeItem("truetone_user_id");
+    navigate("/");
+  };
 
   return (
     <>
@@ -85,15 +92,16 @@ const AppSidebar = () => {
 
         {/* Sign Out (FIXED) */}
         <div className="p-3 border-t border-slate-800">
-          <Link
-            to="/"
-            className={`flex items-center ${
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className={`w-full text-left flex items-center ${
               collapsed ? "justify-center" : "gap-3"
             } px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-900 hover:text-white transition-colors`}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
             {!collapsed && <span>Sign Out</span>}
-          </Link>
+          </button>
         </div>
       </aside>
 

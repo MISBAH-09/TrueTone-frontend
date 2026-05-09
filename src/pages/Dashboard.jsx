@@ -1,13 +1,31 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScanFace, FlaskConical, Sparkles, TrendingUp, Bell, Search, MessageCircle } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import StatCard from "../components/StatCard";
+import { getUserProfile } from "../services/user";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const storedProfile = localStorage.getItem("truetone_profile");
-  const profile = storedProfile ? JSON.parse(storedProfile) : {};
-  const displayName = profile.name?.split(" ")[0] || "User";
+  const initialProfile = storedProfile ? JSON.parse(storedProfile) : {};
+  const [profile, setProfile] = useState(initialProfile);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const result = await getUserProfile();
+        const profileData = result?.data || result;
+        setProfile(profileData);
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const displayName = profile.name || profile.first_name || profile.username || "User";
   const concerns = profile.concerns?.length ? profile.concerns.slice(0, 3).join(", ") : "Complete skin analysis to see your concerns";
   const skinType = profile.skinType || "Not analyzed yet";
   const skinTone = profile.skinTone || "Tone not set";
@@ -23,7 +41,7 @@ const Dashboard = () => {
             <div>
               <p className="text-sm text-slate-500">Welcome back</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight">{displayName}</h1>
-              <p className="mt-2 text-sm text-slate-500">3 days streak 🔥</p>
+              <p className="mt-2 text-sm text-slate-500">Main your streak for healthy skin</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative">
