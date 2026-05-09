@@ -49,3 +49,8 @@ export const fetchAllUsers = async () => {
   const { data } = await api.get("/all/");
   return data;
 };
+
+export const submitOnboarding = async (onboardingData) => {
+  const { data } = await api.post("/onboarding/", onboardingData);
+  return data;
+};

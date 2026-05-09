@@ -43,7 +43,12 @@ const Auth = () => {
         // ─── LOGIN ──────────────────────────────────────────
         const data = await loginUser({ username, password });
 
-        navigate("/dashboard");
+        // Redirect based on onboarding status
+        if (data.data.onboarding_completed) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
       }
     } catch (err) {
       const msg = err.response?.data?.message || "Network error. Make sure the backend server is running.";
